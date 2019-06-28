@@ -1,0 +1,163 @@
+---
+title: "HW5"
+author: "Ziran Xu"
+date: "3/1/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Q1
+
+```{r}
+r=0.025
+sigma = 0.2
+K=14
+S0=10
+N = 24
+S_max = 100
+S_min = 0
+delta_S = 1
+T = 0.5
+dt=  T/N
+payoff = matrix(NA,ncol=N+1,nrow = (S_max - S_min)/delta_S+1)
+# initialize the payoff matrix
+for(i in 1:((S_max - S_min)/delta_S+1))
+{
+  payoff[i,N+1] = max(0,(i-1)*delta_S-K)
+}
+payoff[1,] = S_min
+payoff[(S_max - S_min)/delta_S+1,] = S_max - K
+# calculate the f by finite difference method
+for(i in N:1)
+{
+  A = matrix(0,ncol = (S_max - S_min)/delta_S-1 , nrow = (S_max - S_min)/delta_S-1)
+  B = payoff[2:((S_max - S_min)/delta_S),i+1]
+  B[(S_max - S_min)/delta_S-1]= payoff[(S_max - S_min)/delta_S,i+1] - (-0.5*r*dt*((S_max - S_min)/delta_S)-0.5*((S_max - S_min)/delta_S)^2*dt*sigma^2)*payoff[(S_max - S_min)/delta_S+1,i]
+  for(j in 1:( (S_max - S_min)/delta_S-1))
+  {
+    if(j ==1)
+    {
+      A[j,j] = 1+sigma^2*dt*(j) + r*dt
+      A[j,j+1] = -0.5*r*(j)*dt-0.5*sigma^2*(j)^2*dt
+    }
+    else if(j ==  (S_max - S_min)/delta_S-1)
+    {
+      A[j,j-1] = 0.5*r*j*dt - 0.5* sigma^2*j^2*dt
+      A[j,j] = 1+sigma^2*j^2*dt+r*dt
+    }
+    else
+    {
+      A[j,j-1] = 0.5*r*j*dt - 0.5* sigma^2*j^2*dt
+      A[j,j] = 1+sigma^2*j^2*dt+r*dt
+      A[j,j+1] = -0.5*r*j*dt - 0.5*sigma^2*j^2*dt
+    }
+  }
+  
+  payoff[2:((S_max - S_min)/delta_S),i] = solve(A,B)
+  for(h in 2:( (S_max - S_min)/delta_S))
+  {
+    payoff[h,i]=max(payoff[h,N+1],payoff[h,i])
+  }
+}
+cat("The option price is",payoff[11,1])
+cat("\nThe delta is", (payoff[12,2]-payoff[10,2])/(2*delta_S))
+d1= (payoff[11,3] - payoff[10,3]) / delta_S
+d2 = (payoff[12,3]-payoff[11,3]) / delta_S
+cat("\nThe gamma is", (d2-d1)/delta_S)
+cat("\nThe theta is",(payoff[11,N+1]-payoff[11,1])/T)
+```
+## Q2
+
+```{r}
+d1=exp(-0.0026)
+d2=exp(-2*0.005)
+d3=exp(-3*0.009)
+d4=exp(-4*0.013)
+d5=exp(-5*0.0165)
+d7=exp(-7*0.0218)
+d10=exp(-10*0.027)
+d=c(d1,d2,d3,d4,d5,d7,d10)
+R=0.4
+Q0=0
+term=c(0,1,2,3,4,5,7,10)
+Q=1:8
+Q[1]=Q0
+s=c(0.6405,0.5956,0.5511,0.5144,0.4894,0.4511,0.4156)
+f1=function(x)
+{
+  result=d[1]*(1-R)*(x-Q[1])/(d[1]*(1-x)*(term[2]-term[1]))-s[1]
+  return(result)
+}
+root=uniroot(f1,c(-1,1)) 
+Q[2]= root$root
+
+f2=function(x)
+{
+  result=(d[1]*(1-R)*(Q[2]-Q[1])+d[2]*(1-R)*(x-Q[2]))/(d[1]*(1-Q[2])*(term[2]-term[1])+d[2]*(1-x)*(term[3]-term[2]))-s[2]
+  return(result)
+}
+root=uniroot(f2,c(-1,1)) 
+Q[3] = root$root
+
+f3=function(x)
+{
+  result=(d[1]*(1-R)*(Q[2]-Q[1])+d[2]*(1-R)*(Q[3]-Q[2])+d[3]*(1-R)*(x-Q[3]))/(d[1]*(1-Q[2])*(term[2]-term[1])+d[2]*(1-Q[3])*(term[3]-term[2])+d[3]*(1-x)*(term[4]-term[3]))-s[3]
+  return(result)
+}
+root=uniroot(f3,c(-1,1)) 
+Q[4] = root$root
+
+f4=function(x)
+{
+  result=(d[1]*(1-R)*(Q[2]-Q[1])+d[2]*(1-R)*(Q[3]-Q[2])+d[3]*(1-R)*(Q[4]-Q[3])+d[4]*(1-R)*(x-Q[4]))/(d[1]*(1-Q[2])*(term[2]-term[1])+d[2]*(1-Q[3])*(term[3]-term[2])+d[3]*(1-Q[4])*(term[4]-term[3])+d[4]*(1-x)*(term[5]-term[4]))-s[4]
+  return(result)
+}
+root=uniroot(f4,c(-1,1)) 
+Q[5] = root$root
+
+f5=function(x)
+{
+  result=(d[1]*(1-R)*(Q[2]-Q[1])+d[2]*(1-R)*(Q[3]-Q[2])+d[3]*(1-R)*(Q[4]-Q[3])+d[4]*(1-R)*(Q[5]-Q[4])+d[5]*(1-R)*(x-Q[5]))/(d[1]*(1-Q[2])*(term[2]-term[1])+d[2]*(1-Q[3])*(term[3]-term[2])+d[3]*(1-Q[4])*(term[4]-term[3])+d[4]*(1-Q[5])*(term[5]-term[4])+d[5]*(1-x)*(term[6]-term[5]))-s[5]
+  return(result)
+}
+root=uniroot(f5,c(-1,1)) 
+Q[6] = root$root
+
+f6=function(x)
+{
+  result=(d[1]*(1-R)*(Q[2]-Q[1])+d[2]*(1-R)*(Q[3]-Q[2])+d[3]*(1-R)*(Q[4]-Q[3])+d[4]*(1-R)*(Q[5]-Q[4])+d[5]*(1-R)*(Q[6]-Q[5])+d[6]*(1-R)*(x-Q[6]))/(d[1]*(1-Q[2])*(term[2]-term[1])+d[2]*(1-Q[3])*(term[3]-term[2])+d[3]*(1-Q[4])*(term[4]-term[3])+d[4]*(1-Q[5])*(term[5]-term[4])+d[5]*(1-Q[6])*(term[6]-term[5])+d[6]*(1-x)*(term[7]-term[6]))-s[6]
+  return(result)
+}
+root=uniroot(f6,c(-1,1)) 
+Q[7] = root$root
+
+f7=function(x)
+{
+  result=(d[1]*(1-R)*(Q[2]-Q[1])+d[2]*(1-R)*(Q[3]-Q[2])+d[3]*(1-R)*(Q[4]-Q[3])+d[4]*(1-R)*(Q[5]-Q[4])+d[5]*(1-R)*(Q[6]-Q[5])+d[6]*(1-R)*(Q[7]-Q[6])+d[7]*(1-R)*(x-Q[7]))/(d[1]*(1-Q[2])*(term[2]-term[1])+d[2]*(1-Q[3])*(term[3]-term[2])+d[3]*(1-Q[4])*(term[4]-term[3])+d[4]*(1-Q[5])*(term[5]-term[4])+d[5]*(1-Q[6])*(term[6]-term[5])+d[6]*(1-Q[7])*(term[7]-term[6])+d[6]*(1-x)*(term[8]-term[7]))-s[7]
+  return(result)
+}
+root=uniroot(f7,c(-1,1)) 
+Q[8] = root$root
+survival=1-Q
+print(survival)
+```
+
+```{r pressure, echo=FALSE}
+x1=seq(from=0,to=1,by=0.01)
+x2=seq(from=1,to=2,by=0.01)
+x3=seq(from=2,to=3,by=0.01)
+x4=seq(from=3,to=4,by=0.01)
+x5=seq(from=4,to=5,by=0.01)
+x6=seq(from=5,to=7,by=0.01)
+x7=seq(from=7,to=10,by=0.01)
+plot(x=x1,y=rep(survival[1],length(x1)),type = "l",xlim =c(0,10),ylim=c(-0.1,1.2))
+lines(x=x2,y=rep(survival[2],length(x2)),type = "l")
+lines(x=x3,y=rep(survival[3],length(x3)),type = "l")
+lines(x=x4,y=rep(survival[4],length(x4)),type = "l")
+lines(x=x5,y=rep(survival[5],length(x5)),type = "l")
+lines(x=x6,y=rep(survival[6],length(x6)),type = "l")
+lines(x=x7,y=rep(survival[7],length(x7)),type = "l")
+```
